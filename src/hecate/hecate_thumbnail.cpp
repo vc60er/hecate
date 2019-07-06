@@ -150,13 +150,12 @@ void detect_thumbnail_frames( hecate_params& opt, hecate::video_metadata& meta,
 void generate_thumbnails( hecate_params& opt, vector<int>& v_thumb_idx )
 {
   char strbuf[256];
-  int njpg_cnt = 0;
   int frm_idx = 0;
 
   string filename = hecate::get_filename( std::string(opt.in_video) );
 
     for( size_t i=0; i<v_thumb_idx.size() && i < opt.njpg; i++ ) {
-        int frm_idx = v_thumb_idx[i];
+      frm_idx = v_thumb_idx[i];
 
       sprintf( strbuf, "%s/%s_%02d.jpg",
               opt.out_dir.c_str(), filename.c_str(), frm_idx );
