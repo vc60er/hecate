@@ -155,6 +155,20 @@ void generate_thumbnails( hecate_params& opt, vector<int>& v_thumb_idx )
 
   string filename = hecate::get_filename( std::string(opt.in_video) );
 
+    for( size_t i=0; i<v_thumb_idx.size() && i < opt.njpg; i++ ) {
+        int frm_idx = v_thumb_idx[i];
+
+      sprintf( strbuf, "%s/%s_%02d.jpg",
+              opt.out_dir.c_str(), filename.c_str(), frm_idx );
+      hecate::ffmpeg_video2image(opt.in_video, std::string(strbuf),
+                             frm_idx, opt.jpg_width_px);
+    }
+
+
+
+
+
+  /*
   VideoCapture vr( opt.in_video );
   double rsz_ratio = (double)(2+opt.jpg_width_px)/vr.get(CV_CAP_PROP_FRAME_WIDTH);
   while( njpg_cnt < (int)v_thumb_idx.size() )
@@ -188,5 +202,6 @@ void generate_thumbnails( hecate_params& opt, vector<int>& v_thumb_idx )
     frm_idx++;
   }
   vr.release();
+  */
 }
 

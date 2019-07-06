@@ -32,7 +32,7 @@ namespace hecate {
   const string _ffmpeg = hecate::which("ffmpeg");
   const string _ffmarg = "-loglevel quiet -y";
   const int _lfade = 8; // fade-in/out duration (unit: frame)
-  
+
   // Crop video segment & resize
   static inline void ffmpeg_video_crop(string in_file,
                                        string out_file,
@@ -41,18 +41,18 @@ namespace hecate {
                                        int out_width_px)
   {
     in_file = escape_space(in_file);
-    
+
     char filter[BUF_S];
     sprintf( filter, "'scale=%d:trunc(ow/a/2)*2'", out_width_px);
-    
+
     char cmd[BUF_L];
     sprintf( cmd, "%s -ss %s -t %s -i %s -strict -2 -vf %s %s %s",
             _ffmpeg.c_str(), start_time.c_str(), duration.c_str(),
             in_file.c_str(), filter, out_file.c_str(), _ffmarg.c_str());
-    
+
     system( cmd );
   };
-  
+
   static inline void ffmpeg_video_concat(string in_filelist,
                                          string out_file)
   {
@@ -62,7 +62,7 @@ namespace hecate {
             _ffmarg.c_str() );
     system( cmd );
   };
-  
+
   // Audio fade in/out
   static inline void ffmpeg_audio_fade(string in_file,
                                        string out_file,
@@ -70,14 +70,14 @@ namespace hecate {
                                        double video_fps)
   {
     in_file = escape_space(in_file);
-    
+
     const double afade_sec = (double)2*_lfade/video_fps;
     const double afade_msec = (int)10000*(afade_sec-floor(afade_sec));
-    
+
     double afos  = video_duration_sec - afade_sec; // audio fade-out start
     int afos_ss  = (int) afos; // NOTE: we don't compute modulo this time
     int afos_mss = (int) 10000*(afos - floor(afos));
-    
+
     char filter[BUF_S];
     sprintf( filter, "'afade=t=in:ss=0:d=0.%04d,"
                       "afade=t=out:st=%d.%04d:d=0.%04d'",
@@ -89,7 +89,7 @@ namespace hecate {
     system( cmd );
 
   };
-  
+
   // Video fade in/out
   static inline void ffmpeg_video_fade(string in_file,
                                        string out_file,
@@ -97,7 +97,7 @@ namespace hecate {
                                        bool out_only=false)
   {
     in_file = escape_space(in_file);
-    
+
     char filter[BUF_S];
     if( out_only ) {
       sprintf( filter, "'fade=out:%d:%d'",
@@ -107,14 +107,14 @@ namespace hecate {
       sprintf( filter, "'fade=in:0:%d,fade=out:%d:%d'",
               _lfade, video_duration-_lfade, _lfade);
     }
-    
+
     char cmd[BUF_L];
     sprintf( cmd, "%s -i %s -vf %s %s %s", _ffmpeg.c_str(),
             in_file.c_str(), filter, out_file.c_str(), _ffmarg.c_str());
     system( cmd );
   };
-  
-  
+
+
   // Based on http://blog.pkh.me/p/21-high-quality-gif-with-ffmpeg.html
   static inline void ffmpeg_video2gif(string in_file,
                                       string out_file,
@@ -124,15 +124,15 @@ namespace hecate {
                                       int out_width_px)
   {
     in_file = escape_space(in_file);
-    
+
     string out_dir = hecate::get_dir( std::string(out_file) );
-    
+
     char filter[BUF_S];
     sprintf( filter, "fps=%d,scale=%d:-1:flags=lanczos", out_fps, out_width_px );
-    
+
     char palette[BUF_M];
     sprintf( palette, "%s/palatte.png", out_dir.c_str() );
-    
+
     char time_setup[BUF_S] = "";
     if( !start_time.empty() && !duration.empty() ) {
       sprintf( time_setup, "-ss %s -t %s",
@@ -140,26 +140,41 @@ namespace hecate {
     }
 
     char cmd[BUF_L];
-    
+
     // Create a palatte
     sprintf( cmd, "%s %s -i %s -vf '%s,palettegen=stats_mode=diff' %s %s",
             _ffmpeg.c_str(), time_setup,  in_file.c_str(), filter,
             _ffmarg.c_str(), palette );
     system( cmd );
-    
+
     // Convert segment to gif
     sprintf( cmd, "%s %s -i %s -i %s -lavfi '%s [x]; [x][1:v] paletteuse' %s %s",
             _ffmpeg.c_str(), time_setup, in_file.c_str(), palette, filter,
             _ffmarg.c_str(), out_file.c_str());
     system( cmd );
-    
+
     // Delete palette
     sprintf( cmd, "rm %s", palette );
     system( cmd );
   };
-  
-  
-  
+
+
+  static inline void ffmpeg_video2image(string in_file, string out_file, int frm_idx, int out_width_px) {
+
+    in_file = escape_space(in_file);
+
+    char filter[BUF_S];
+    sprintf( filter, "'scale=%d:trunc(ow/a/2)*2'", out_width_px);
+
+    char cmd[BUF_L];
+
+    // Convert segment to gif
+    sprintf( cmd, "%s  -i %s -vf select='eq(n\\,%d)' -vf %s -vsync 2 -f image2  %s %s",
+            _ffmpeg.c_str(),  in_file.c_str(),
+            frm_idx, filter, _ffmarg.c_str(),  out_file.c_str());
+    system( cmd );
+  }
+
 }
 #endif
 
