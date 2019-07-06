@@ -17,29 +17,29 @@ void run_hecate( hecate_params& opt, vector<int>& v_thumb_idx,
                  vector<hecate::Range>& v_gif_range,
                  vector<hecate::Range>& v_mov_range)
 {
-  if( !hecate::file_exists(opt.in_video) ) {
-    fprintf(stderr, "File not exist: %s\n", opt.in_video.c_str());
-    return;
-  }
-  
+//  if( !hecate::file_exists(opt.in_video) ) {
+//    fprintf(stderr, "File not exist: %s\n", opt.in_video.c_str());
+//    return;
+//  }
+
   v_thumb_idx.clear();
   v_gif_range.clear();
   v_mov_range.clear();
 
   hecate::Clock::time_point t0;
   hecate::VideoParser parser;
-  
+
   vector<hecate::ShotRange> v_shot_range;
   Mat histo_features;
   Mat diff_features;
-  
-  
+
+
   ////////////////////////////////////////////////////////////////////////////
   //
   // Parse video
   //
   ////////////////////////////////////////////////////////////////////////////
-  
+
   if( opt.debug ) {
     printf("run_hecate: Video segmentation and keyframe extraction\n");
     t0 = hecate::Clock::now();
@@ -55,18 +55,18 @@ void run_hecate( hecate_params& opt, vector<int>& v_thumb_idx,
   parser_opt.max_duration = opt.max_duration;
   parser_opt.ignore_rest = (opt.max_duration>0); // ignore parts after max_nfrms
   parser_opt.debug = opt.debug;
-  
+
   // PARSE
   v_shot_range = parser.parse_video( opt.in_video, parser_opt );
   if( v_shot_range.empty() ) {
     fprintf(stderr, "run_hecate: Failed to parse the video\n");
     return;
   }
-  
+
   histo_features = parser.get_frame_features();
   diff_features  = parser.get_frame_diff_features();
   opt.step_sz    = parser.get_effective_step_size();
-  
+
   // If video is shorter than desired summary length
   if( opt.mov && opt.lmov >= parser.meta.duration ) {
     fprintf( stderr, "run_hecate: Video duration is %.2f seconds, "
@@ -75,7 +75,7 @@ void run_hecate( hecate_params& opt, vector<int>& v_thumb_idx,
             parser.meta.duration, (double)opt.lmov);
     opt.mov = false;
   }
-  
+
   // Check desired resolution of output
   if( opt.jpg_width_px<0 || opt.jpg_width_px > parser.meta.width ) {
     //fprintf( stderr, "run_hecate: Forcing jpg_width_px to %d\n",parser.meta.width);
@@ -89,20 +89,20 @@ void run_hecate( hecate_params& opt, vector<int>& v_thumb_idx,
     //fprintf( stderr, "run_hecate: Forcing mov_width_px to %d\n",parser.meta.width);
     opt.mov_width_px = parser.meta.width;
   }
-  
+
   if( opt.debug ) {
     hecate::print_elapsed_time( t0, "run_hecate" );
     hecate::print_video_metadata( opt.in_video, parser.meta );
   }
 
-  
-  
+
+
   ////////////////////////////////////////////////////////////////////////////
   //
   // Analyze video
   //
   ////////////////////////////////////////////////////////////////////////////
-  
+
   // Print shot info
   if( opt.info_shot ) {
     printf("shots: ");
@@ -113,7 +113,7 @@ void run_hecate( hecate_params& opt, vector<int>& v_thumb_idx,
     }
     printf("\n");
   }
-  
+
   // Print keyframe indices
   if( opt.info_keyfrm ) {
     vector<int> keyfrms;
@@ -122,7 +122,7 @@ void run_hecate( hecate_params& opt, vector<int>& v_thumb_idx,
         keyfrms.push_back(v_shot_range[i].v_idx[j]);
       }
     }
-    
+
     printf("keyframes: [");
     for(size_t i=0; i<keyfrms.size(); i++) {
       printf("%d", keyfrms[i]);
@@ -131,30 +131,30 @@ void run_hecate( hecate_params& opt, vector<int>& v_thumb_idx,
     }
     printf("]\n");
   }
-  
+
   // Thumbnail extraction module
   if( opt.jpg ) {
     if( opt.debug ) {
       printf("run_hecate: Video keyframe detection\n");
       t0 = hecate::Clock::now();
     }
-    
+
     detect_thumbnail_frames( opt, parser.meta, v_shot_range,
                              histo_features, diff_features,
                              v_thumb_idx);
-    
+
     if( opt.debug ) {
       hecate::print_elapsed_time( t0, "run_hecate" );
     }
   }
-  
+
   // GIF generation module
   if( opt.gif ) {
     if( opt.debug ) {
       printf("run_hecate: Video highlight detection for GIF creation\n");
       t0 = hecate::Clock::now();
     }
-    
+
     bool mov = opt.mov;
     opt.mov = false;
     detect_highlight_shots( opt, parser.meta, v_shot_range,
@@ -164,14 +164,14 @@ void run_hecate( hecate_params& opt, vector<int>& v_thumb_idx,
       hecate::print_elapsed_time( t0, "run_hecate" );
     }
   }
-  
+
   // Video summarization module
   if( opt.mov ) {
     if( opt.debug ) {
       printf("run_hecate: Video highlight detection for summarization\n");
       t0 = hecate::Clock::now();
     }
-    
+
     bool gif = opt.gif;
     opt.gif = false;
     detect_highlight_shots( opt, parser.meta, v_shot_range,
